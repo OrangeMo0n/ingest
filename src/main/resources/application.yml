@@ -1,0 +1,22 @@
+server:
+    # 服务器的HTTP端口，默认为8080
+    port: 8080
+    servlet: 
+        context-path: /engine_ingest
+    tomcat:
+        uri_encoding: UTF-8
+        max-threads: 800
+        min-spare-threads: 30
+
+etcd:
+    # Etcd配置ip和port
+    ip: 127.0.0.1
+    port: 2379
+
+# Swagger配置
+swagger:
+    # 是否开启swagger
+    enabled: true
+    # 请求前缀
+    pathMapping: /
+    host: 127.0.0.1:8080
