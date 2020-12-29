@@ -13,6 +13,13 @@ etcd:
     ip: 127.0.0.1
     port: 2379
 
+# 线程池配置
+pool:
+    corePoolSize: 20
+    maxPoolSize: 40
+    keepAliveSeconds: 300
+    queueCapacity: 50
+
 # Swagger配置
 swagger:
     # 是否开启swagger
