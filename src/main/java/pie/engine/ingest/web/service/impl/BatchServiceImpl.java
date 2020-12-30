@@ -78,7 +78,7 @@ public class BatchServiceImpl implements IBatchService {
         try {
             // CountDownLatch latch = new CountDownLatch(batchInfoList.size());
             for (int i = 0; i < batchIdList.size(); i++) {
-                Future<BatchInfo> future = asyncQueryBatch.queryBatch(batchIdList.get(i), dataType);
+                Future<BatchInfo> future = asyncQueryBatch.queryBatch(dataType, batchIdList.get(i));
                 queryBatchList.add(future);
             }
 

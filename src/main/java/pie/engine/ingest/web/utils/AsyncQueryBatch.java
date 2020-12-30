@@ -61,22 +61,29 @@ public class AsyncQueryBatch {
             }
         }
 
+        curBatchInfo.setAllCount(allCount);
         curBatchInfo.setInitCount(initCount);
         curBatchInfo.setRunningCount(runningCount);
         curBatchInfo.setSuccessCount(successCount);
         curBatchInfo.setFailedCount(failedCount);
         curBatchInfo.setConfirmedCount(confirmedCount);
 
-        if (allCount == initCount) {
+        if (allCount.equals(initCount)) {
             curBatchInfo.setStatus("INITIAL");
-        } else if (allCount == confirmedCount) {
-            curBatchInfo.setStatus("CONFIRMED");
-        } else if (allCount == (successCount + confirmedCount)) {
-            curBatchInfo.setStatus("SUCCESS");
-        } else if (failedCount > 0) {
-            curBatchInfo.setStatus("ABORTED");
-        } else if (runningCount > 0) {
-            curBatchInfo.setStatus("RUNNING");
+        } else {
+            if (allCount.equals(confirmedCount)) {
+                curBatchInfo.setStatus("CONFIRMED");
+            } else {
+                if (allCount.equals(successCount + confirmedCount)) {
+                    curBatchInfo.setStatus("SUCCESS");
+                } else {
+                    if (failedCount.intValue() > 0) {
+                        curBatchInfo.setStatus("ABORTED");
+                    } else {
+                        curBatchInfo.setStatus("RUNNING");
+                    }
+                }
+            }
         }
 
         logger.info(batchId + ": Status-" + curBatchInfo.getStatus() + ", initCount-" + initCount + ", runningCount-"
