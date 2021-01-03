@@ -1,6 +1,6 @@
 server:
     # 服务器的HTTP端口，默认为8080
-    port: 8080
+    port: 8780
     servlet: 
         context-path: /engine_ingest
     tomcat:
@@ -26,4 +26,4 @@ swagger:
     enabled: true
     # 请求前缀
     pathMapping: /
-    host: 127.0.0.1:8080
+    host: 127.0.0.1:8780
