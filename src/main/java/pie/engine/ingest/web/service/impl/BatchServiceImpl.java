@@ -3,11 +3,9 @@ package pie.engine.ingest.web.service.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import pie.engine.ingest.web.domain.BatchInfo;
@@ -39,44 +37,8 @@ public class BatchServiceImpl implements IBatchService {
 
         List<String> batchIdList = ingestEtcdTool.getBatchIds(dataType);
 
-        /*
-         * for (String curBatchId : batchIdList) { BatchInfo curBatchInfo =
-         * ingestEtcdTool.getBatch(dataType, curBatchId, true); if (curBatchInfo !=
-         * null) { List<String> taskIdList = ingestEtcdTool.getTaskList(dataType,
-         * curBatchId); Integer allCount = taskIdList.size();
-         * curBatchInfo.setAllCount(allCount); Integer initCount = 0, runningCount = 0,
-         * successCount = 0, failedCount = 0, confirmedCount = 0; for (int i=0;
-         * i<allCount; i++) { String curTaskId = taskIdList.get(i);
-         * 
-         * TaskInfo curTask = ingestEtcdTool.getTask(dataType, curTaskId); if (curTask
-         * == null) { continue; } String taskState = curTask.getState(); if
-         * (taskState.equals("init") || taskState.equals("download_success") ||
-         * taskState.equals("prepro_success")) { initCount ++; } else if
-         * (taskState.equals("upload_success")) { successCount ++; } else if
-         * (taskState.equals("confirmed")) { confirmedCount ++; } else if
-         * (taskState.equals("download_fail") || taskState.equals("prepro_fail") ||
-         * taskState.equals("prepro_fail")) { failedCount ++; } else { String taskLock =
-         * curTask.getLock(); if (taskLock == null || taskLock.length() == 0) {
-         * failedCount ++; } else { runningCount ++; } } }
-         * 
-         * curBatchInfo.setInitCount(initCount);
-         * curBatchInfo.setRunningCount(runningCount);
-         * curBatchInfo.setSuccessCount(successCount);
-         * curBatchInfo.setFailedCount(failedCount);
-         * curBatchInfo.setConfirmedCount(confirmedCount);
-         * 
-         * if (allCount == initCount) { curBatchInfo.setStatus("INITIAL"); } else if
-         * (allCount == confirmedCount) { curBatchInfo.setStatus("CONFIRMED"); } else if
-         * (allCount == (successCount+confirmedCount)) {
-         * curBatchInfo.setStatus("SUCCESS"); } else if (failedCount > 0) {
-         * curBatchInfo.setStatus("ABORTED"); } else if (runningCount > 0) {
-         * curBatchInfo.setStatus("RUNNING"); }
-         * 
-         * batchInfoList.add(curBatchInfo); } }
-         */
         List<Future<BatchInfo>> queryBatchList = new ArrayList<>();
         try {
-            // CountDownLatch latch = new CountDownLatch(batchInfoList.size());
             for (int i = 0; i < batchIdList.size(); i++) {
                 Future<BatchInfo> future = asyncQueryBatch.queryBatch(dataType, batchIdList.get(i));
                 queryBatchList.add(future);
@@ -84,10 +46,13 @@ public class BatchServiceImpl implements IBatchService {
 
             for (Future future : queryBatchList) {
                 BatchInfo curBatch = (BatchInfo) future.get();
+                if (status != null && status.length() > 0) {
+                    if (curBatch.getStatus().equals(status) == false) {
+                        continue;
+                    }
+                }
                 batchInfoList.add(curBatch);
             }
-
-            // latch.await();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -96,9 +61,47 @@ public class BatchServiceImpl implements IBatchService {
     }
 
     @Override
-    public BatchInfo getBatch(String batchId) {
-        BatchInfo batchInfo = new BatchInfo();
+    public BatchInfo getBatch(String dataType, String batchId) {
+        BatchInfo batchInfo = ingestEtcdTool.getBatch(dataType, batchId, false);
+        if (batchInfo == null) {
+            return null;
+        }
 
         return batchInfo;
+    }
+
+    @Override
+    public List<TaskInfo> getTaskList(String dataType, String batchId) {
+        List<TaskInfo> taskInfoList = new ArrayList<>();
+
+        List<String> taskIdList = ingestEtcdTool.getTaskList(dataType, batchId);
+        if (taskIdList == null || taskIdList.size() == 0) {
+            return null;
+        }
+
+        for (String taskId : taskIdList) {
+            TaskInfo curTaskInfo = ingestEtcdTool.getTask(dataType, taskId);
+            if (curTaskInfo == null) {
+                continue;
+            }
+
+            String taskState = curTaskInfo.getState();
+            String taskLock = curTaskInfo.getLock();
+
+            if (taskState.equals("download_doing") || taskState.equals("prepro_doing")
+                    || taskState.equals("upload_doing")) {
+                if (taskLock == null || taskLock.length() == 0) {
+                    curTaskInfo.setException(true);
+                }
+            }
+
+            if (taskState.equals("download_fail") || taskState.equals("prepro_fail")
+                    || taskState.equals("upload_fail")) {
+                curTaskInfo.setException(true);
+            }
+            taskInfoList.add(curTaskInfo);
+        }
+
+        return taskInfoList;
     }
 }

@@ -1,7 +1,6 @@
 package pie.engine.ingest.web.utils;
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
@@ -89,8 +88,6 @@ public class AsyncQueryBatch {
         logger.info(batchId + ": Status-" + curBatchInfo.getStatus() + ", initCount-" + initCount + ", runningCount-"
                 + runningCount + ", successCount-" + successCount + ", failedCount-" + failedCount + ", confirmedCount-"
                 + confirmedCount);
-
-        // latch.countDown();
 
         return new AsyncResult<>(curBatchInfo);
     }

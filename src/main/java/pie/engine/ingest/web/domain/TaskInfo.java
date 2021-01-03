@@ -6,8 +6,7 @@ import java.util.Map;
 import io.swagger.annotations.ApiModelProperty;
 import pie.engine.ingest.framework.core.domain.BaseEntity;
 
-public class TaskInfo extends BaseEntity
-{
+public class TaskInfo extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty(name = "Task id")
@@ -86,7 +85,18 @@ public class TaskInfo extends BaseEntity
     public String getEndProTime() {
         return endProTime;
     }
-    
+
+    @ApiModelProperty(name = "异常")
+    private boolean exception = false;
+
+    public void setException(boolean exception) {
+        this.exception = exception;
+    }
+
+    public boolean getException() {
+        return exception;
+    }
+
     @ApiModelProperty(name = "其他信息")
     private Map<String, String> otherTaskInfo = new HashMap<String, String>();
 

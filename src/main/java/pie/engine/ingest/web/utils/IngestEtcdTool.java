@@ -21,30 +21,22 @@ public class IngestEtcdTool {
     Charset etcdCharset = Charset.forName("utf8");
 
     /*
-    public static IngestEtcdTool ingestEtcdTool = new IngestEtcdTool();
-
-    public IngestEtcdTool() {
-        //EtcdConfig etcdConfig = new EtcdConfig();
-
-        //String etcd_addr = "http://" + etcdConfig.getEtcdIp() + ":" + etcdConfig.getEtcdPort();
-        String etcd_addr = "http://127.0.0.1:2379";
-        try {
-            Client client = Client.builder().endpoints(etcd_addr).build();
-            kvClient = client.getKVClient();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    */
+     * public static IngestEtcdTool ingestEtcdTool = new IngestEtcdTool();
+     * 
+     * public IngestEtcdTool() { //EtcdConfig etcdConfig = new EtcdConfig();
+     * 
+     * //String etcd_addr = "http://" + etcdConfig.getEtcdIp() + ":" +
+     * etcdConfig.getEtcdPort(); String etcd_addr = "http://127.0.0.1:2379"; try {
+     * Client client = Client.builder().endpoints(etcd_addr).build(); kvClient =
+     * client.getKVClient(); } catch (Exception e) { e.printStackTrace(); } }
+     */
 
     public boolean connectToEtcd(String ip, Integer port) {
         String etcd_addr = "http://" + ip + ":" + port;
         try {
             Client client = Client.builder().endpoints(etcd_addr).build();
             kvClient = client.getKVClient();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("Catch exception when connect to etcd!");
             return false;
         }
@@ -57,18 +49,16 @@ public class IngestEtcdTool {
 
         try {
             ByteSequence keyPrefixByteSeq = ByteSequence.from(keyPrefix.getBytes());
-            ByteSequence endKeyByteSeq = ByteSequence.from((keyPrefix+"0").getBytes());
-            CompletableFuture<GetResponse> getFuture =
-                    kvClient.get(keyPrefixByteSeq, GetOption.newBuilder().
-                        withKeysOnly(true).withRange(endKeyByteSeq).build());
+            ByteSequence endKeyByteSeq = ByteSequence.from((keyPrefix + "0").getBytes());
+            CompletableFuture<GetResponse> getFuture = kvClient.get(keyPrefixByteSeq,
+                    GetOption.newBuilder().withKeysOnly(true).withRange(endKeyByteSeq).build());
             GetResponse getResponse = getFuture.get();
             int kvCount = getResponse.getKvs().size();
-            for (int i=0; i<kvCount; i++) {
+            for (int i = 0; i < kvCount; i++) {
                 String kvKey = getResponse.getKvs().get(i).getKey().toString(etcdCharset);
                 kMap.add(kvKey);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -79,19 +69,17 @@ public class IngestEtcdTool {
         Map<String, String> kvMap = new HashMap<String, String>();
         try {
             ByteSequence keyPrefixByteSeq = ByteSequence.from(keyPrefix.getBytes());
-            ByteSequence endKeyByteSeq = ByteSequence.from((keyPrefix+"0").getBytes());
-            CompletableFuture<GetResponse> getFuture =
-                    kvClient.get(keyPrefixByteSeq, GetOption.newBuilder().withRange(endKeyByteSeq).build());
+            ByteSequence endKeyByteSeq = ByteSequence.from((keyPrefix + "0").getBytes());
+            CompletableFuture<GetResponse> getFuture = kvClient.get(keyPrefixByteSeq,
+                    GetOption.newBuilder().withRange(endKeyByteSeq).build());
             GetResponse getResponse = getFuture.get();
             int kvCount = getResponse.getKvs().size();
-            for (int i=0; i<kvCount; i++) {
+            for (int i = 0; i < kvCount; i++) {
                 String kvKey = getResponse.getKvs().get(i).getKey().toString(etcdCharset);
-                String kvValue = getResponse.getKvs().get(i).
-                        getValue().toString(etcdCharset);
+                String kvValue = getResponse.getKvs().get(i).getValue().toString(etcdCharset);
                 kvMap.put(kvKey, kvValue);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("Catch exception when get etcd record by prefix!");
             return null;
         }
@@ -110,8 +98,7 @@ public class IngestEtcdTool {
                 return "";
             }
             value = getResponse.getKvs().get(0).getValue().toString(etcdCharset);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("Catch exception when get etcd record by key!");
             return "";
         }
@@ -124,13 +111,54 @@ public class IngestEtcdTool {
             ByteSequence valueByteSeq = ByteSequence.from(value.getBytes());
 
             kvClient.put(keyByteSeq, valueByteSeq);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("Catch exception when put etcd record by key:" + key + ", value:" + value);
             return false;
         }
 
         return true;
+    }
+
+    public String getBatchAttr(String typeId, String batchId, String key) {
+        String fullKeyNode = "/ingest/" + typeId + "/batch/" + batchId + "/" + key;
+
+        try {
+            return get(fullKeyNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean putBatchAttr(String typeId, String batchId, String key, String value) {
+        try {
+            String fullKeyNode = "/ingest/" + typeId + "/batch/" + batchId + "/" + key;
+            return put(fullKeyNode, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public String getTaskAttr(String typeId, String taskId, String key) {
+        String fullKeyNode = "/ingest/" + typeId + "/task/" + taskId + "/" + key;
+
+        try {
+            return get(fullKeyNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean putTaskAttr(String typeId, String taskId, String key, String value) {
+        try {
+            String fullKeyNode = "/ingest/" + typeId + "/task/" + taskId + "/" + key;
+            return put(fullKeyNode, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public List<String> getTaskList(String typeId, String batchId) {
@@ -144,8 +172,7 @@ public class IngestEtcdTool {
             for (int j = 0; j < taskListArray.length; j++) {
                 taskIdList.add(taskListArray[j]);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -167,7 +194,7 @@ public class IngestEtcdTool {
 
             for (Map.Entry<String, String> entry : batchKvMap.entrySet()) {
                 String mapKey = entry.getKey();
-                mapKey = mapKey.replace(etcd_node_prefix+"/", "");
+                mapKey = mapKey.replace(etcd_node_prefix + "/", "");
                 switch (mapKey) {
                     case "create_time":
                         batchInfo.setCreateBatchTime(entry.getValue());
@@ -200,7 +227,7 @@ public class IngestEtcdTool {
                             }
                             batchInfo.setTaskList(taskIdList);
                         }
-                        
+
                         break;
                     default:
                         batchInfo.addOtherInfo(mapKey, entry.getValue());
@@ -208,8 +235,7 @@ public class IngestEtcdTool {
                 }
             }
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Catch exception when get etcd batch by batch id:" + batchId);
             return null;
@@ -254,8 +280,7 @@ public class IngestEtcdTool {
                         break;
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Catch exception when get etcd task by task id:" + taskId);
             return null;
@@ -276,7 +301,7 @@ public class IngestEtcdTool {
             }
 
             for (String batchKey : batchKMap) {
-                batchKey = batchKey.replace(etcd_node_prefix+"/", "");
+                batchKey = batchKey.replace(etcd_node_prefix + "/", "");
                 String[] splitKeys = batchKey.split("/");
                 if (splitKeys.length <= 0) {
                     continue;
@@ -287,7 +312,7 @@ public class IngestEtcdTool {
                 }
 
                 boolean existBatch = false;
-                for (int j=0; j<batchIdList.size(); j++) {
+                for (int j = 0; j < batchIdList.size(); j++) {
                     if (batchIdList.get(j).equals(tempBatchId)) {
                         existBatch = true;
                         break;
@@ -298,8 +323,7 @@ public class IngestEtcdTool {
                 }
                 batchIdList.add(tempBatchId);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Catch exception when get etcd batch ids，type id:" + typeId);
             return null;
@@ -320,15 +344,15 @@ public class IngestEtcdTool {
             }
 
             for (String taskKey : taskKMap) {
-                taskKey = taskKey.replace(etcd_node_prefix+"/", "");
+                taskKey = taskKey.replace(etcd_node_prefix + "/", "");
                 String[] splitKeys = taskKey.split("/");
                 if (splitKeys.length <= 0) {
                     continue;
                 }
                 String tempTaskId = splitKeys[0];
-                
+
                 boolean existTask = false;
-                for (int j=0; j<taskIdList.size(); j++) {
+                for (int j = 0; j < taskIdList.size(); j++) {
                     if (taskIdList.get(j).equals(tempTaskId)) {
                         existTask = true;
                         break;
@@ -339,8 +363,7 @@ public class IngestEtcdTool {
                 }
                 taskIdList.add(tempTaskId);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Catch exception when get etcd batch ids，type id:" + typeId);
             return null;
