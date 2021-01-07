@@ -1,8 +1,12 @@
 server:
     # 服务器的HTTP端口，默认为8080
-    port: 8780
+    port: 9718
     servlet: 
         context-path: /engine_ingest
+        encoding:
+            force: true
+            charset: UTF-8
+            enabled: true
     tomcat:
         uri_encoding: UTF-8
         max-threads: 800
@@ -11,7 +15,7 @@ server:
 etcd:
     # Etcd配置ip和port
     ip: 127.0.0.1
-    port: 2379
+    port: 12379
 
 # 线程池配置
 pool:
@@ -26,4 +30,13 @@ swagger:
     enabled: true
     # 请求前缀
     pathMapping: /
-    host: 127.0.0.1:8780
+    host: 127.0.0.1:9718
+
+# ssh远程访问地址
+ssh:
+    url:
+        total: http://10.105.176.123:9200/engine.ingest.total/_search?pretty&size=1000
+        datasets: http://10.105.176.123:9200/engine.dataset/_search?pretty&size=1000
+    
+    user: elastic
+    password: O8n36hsA044dvE6Q6MW1u9nP
